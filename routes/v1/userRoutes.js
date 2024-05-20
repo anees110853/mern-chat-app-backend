@@ -20,8 +20,4 @@ router.post('/validate_pass_reset_link', userController.validateLink);
 
 router.post('/reset_password', userController.resetPassword);
 
-router.post('/send_otp', authMiddleware.verifyUser, userController.sendOTP);
-
-router.post('/verify_otp', authMiddleware.verifyUser, userController.verifyOTP);
-
 module.exports = router;
