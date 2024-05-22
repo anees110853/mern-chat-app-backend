@@ -11,7 +11,7 @@ const _ = require('lodash');
 
 const signup = async (req, res) => {
   try {
-    const { email, password, firebaseToken } = req.body;
+    const { email, password } = req.body;
     if (!email || !password) {
       return res.status(422).send({ error: 'Email or password missing!' });
     }
@@ -31,32 +31,10 @@ const signup = async (req, res) => {
       });
     }
 
-    if (firebaseToken) {
-      await userService.updateAllUsers(
-        {
-          'firebaseTokens.token': firebaseToken,
-        },
-        {
-          $pull: {
-            firebaseTokens: { token: firebaseToken },
-          },
-        }
-      );
-    }
-
     user = await userService.addUser({
       email: req.body.email.toLowerCase(),
       password: req.body.password,
-      ...(firebaseToken && {
-        firebaseTokens: [
-          {
-            platform: req.headers.platform
-              ? req.headers.platform.toLowerCase()
-              : PLATFORMS.android,
-            token: firebaseToken,
-          },
-        ],
-      }),
+      name: req.body.firstName + ' ' + req.body.lastName,
     });
 
     const accessToken = jwtService.generateAccessToken(user);
@@ -76,6 +54,7 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password, firebaseToken } = req.body;
+
     if (!email || !password) {
       return res.status(422).send({ error: 'Email or password missing!' });
     }
