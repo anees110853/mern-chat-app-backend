@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const bcrypt = require("bcrypt");
+const bcrypt = require('bcrypt');
 
 const userSchema = new Schema({
   email: {
@@ -11,18 +11,12 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  firebaseTokens: [
-    {
-      platform: String,
-      token: String,
-    },
-  ],
   name: {
     type: String,
   },
 });
 
-userSchema.pre("save", async function (next) {
+userSchema.pre('save', async function (next) {
   try {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(this.password, salt);
@@ -33,7 +27,7 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-userSchema.pre("findOneAndUpdate", async function (next) {
+userSchema.pre('findOneAndUpdate', async function (next) {
   try {
     if (this._update.password) {
       const salt = await bcrypt.genSalt(10);
@@ -46,5 +40,5 @@ userSchema.pre("findOneAndUpdate", async function (next) {
   }
 });
 
-const UserModel = mongoose.model("user", userSchema);
+const UserModel = mongoose.model('user', userSchema);
 module.exports = UserModel;
