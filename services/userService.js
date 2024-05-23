@@ -1,4 +1,4 @@
-const { UserModel } = require("../models");
+const { UserModel } = require('../models');
 
 const getOneUser = async (condition) => {
   return new Promise((resolve, reject) => {
@@ -58,7 +58,7 @@ const addUser = async (data) => {
 const getTokens = async (condition, limit, skip) => {
   return new Promise((resolve, reject) => {
     UserModel.find(condition)
-      .select("firebaseTokens")
+      .select('firebaseTokens')
       .limit(limit || 500)
       .skip(skip || 0)
       .then((data) => {
@@ -70,6 +70,8 @@ const getTokens = async (condition, limit, skip) => {
   });
 };
 
+const aggregate = async (query) => await UserModel.aggregate(query);
+
 module.exports = {
   getOneUser,
   updateUser,
@@ -78,4 +80,5 @@ module.exports = {
   getUsers,
   getTokens,
   updateAllUsers,
+  aggregate,
 };
