@@ -1,5 +1,6 @@
 const { default: mongoose } = require('mongoose');
 const { jwtService, userService, chatService } = require('../services');
+const { SOCKET_EVENTS } = require('../constants');
 
 const createChat = async (req, res) => {
   try {
@@ -16,9 +17,8 @@ const createChat = async (req, res) => {
     });
 
     const existingChat = await chatService.getOneChat({
-      creator: req.user?._id,
       isGroup: false,
-      participants: { $size: userIds.length, $all: userIds },
+      participants: { $all: [...userIds, req?.user?._id] },
     });
 
     if (existingChat) {
@@ -27,17 +27,102 @@ const createChat = async (req, res) => {
 
     const newChat = await chatService.addChat({
       creator: new mongoose.Types.ObjectId(req.user?._id),
-      participants: userIds,
+      participants: [...userIds, req.user?._id],
       isGroup: false,
     });
 
     if (!newChat) {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
+
+    const io = req.app.get('socketio');
+
+    io.emit(SOCKET_EVENTS.re_fetch_chats, {
+      ids: [...users, req.user._id.toString()],
+    });
+
     res.status(200).json({ message: 'Success' });
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+const getMyChats = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const query = [
+      {
+        $match: {
+          $or: [{ creator: user?._id }, { participants: user?._id }],
+        },
+      },
+      {
+        $addFields: {
+          participants: {
+            $cond: {
+              if: { $eq: ['$isGroup', false] },
+              then: {
+                $filter: {
+                  input: '$participants',
+                  as: 'participant',
+                  cond: { $ne: ['$$participant', user?._id] },
+                },
+              },
+              else: '$participants',
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'participants',
+          foreignField: '_id',
+          as: 'users',
+        },
+      },
+    ];
+
+    const data = await chatService.aggregate(query);
+
+    res.status(200).json({ message: 'Chat Finds Successfully', data: data });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
+
+const getChatDetail = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const query = [
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(chatId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'participants',
+          foreignField: '_id',
+          as: 'users',
+        },
+      },
+    ];
+
+    const data = await chatService.aggregate(query);
+
+    res.status(200).json({ message: 'Chat Finds Successfully', data: data });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
 };
 
 module.exports = {
   createChat,
+  getMyChats,
+  getChatDetail,
 };

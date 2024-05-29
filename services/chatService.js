@@ -55,6 +55,8 @@ const addChat = async (data) => {
   });
 };
 
+const aggregate = async (query) => await ChatModel.aggregate(query);
+
 module.exports = {
   getOneChat,
   updateChat,
@@ -62,4 +64,5 @@ module.exports = {
   addChat,
   getChats,
   updateAllChats,
+  aggregate,
 };

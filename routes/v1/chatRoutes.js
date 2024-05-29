@@ -8,4 +8,16 @@ router.post(
   chatController.createChat
 );
 
+router.get(
+  '/get_my_chats',
+  authMiddleware.verifyUser,
+  chatController.getMyChats
+);
+
+router.get(
+  '/get_chat_detail/:chatId',
+  authMiddleware.verifyUser,
+  chatController.getChatDetail
+);
+
 module.exports = router;

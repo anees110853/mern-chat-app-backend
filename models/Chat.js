@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 const chatSchema = new Schema(
   {
     creator: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: 'User',
     },
     participants: [
       {
@@ -15,6 +16,9 @@ const chatSchema = new Schema(
     isGroup: {
       type: Boolean,
       default: false,
+    },
+    groupName: {
+      type: String,
     },
   },
   { timestamps: true }
