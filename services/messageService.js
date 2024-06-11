@@ -55,6 +55,8 @@ const addMessage = async (data) => {
   });
 };
 
+const aggregate = async (query) => await MessageModel.aggregate(query);
+
 module.exports = {
   getOneMessage,
   updateMessage,
@@ -62,4 +64,5 @@ module.exports = {
   addMessage,
   getMessages,
   updateAllMessages,
+  aggregate
 };
