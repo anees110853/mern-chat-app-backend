@@ -43,6 +43,30 @@ const getMessages = async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: 'users',
+          localField: 'sender',
+          foreignField: '_id',
+          as: 'sender',
+        },
+      },
+      {
+        $unwind: {
+          path: '$sender',
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          chatId: 1,
+          message: 1,
+          createdAt: 1,
+          sender: '$sender._id',
+          senderName: '$sender.name',
+        },
+      },
+
+      {
         $facet: {
           meta: [{ $count: 'total' }],
           data: [{ $skip: (pageNo - 1) * pageSize }, { $limit: pageSize }],
