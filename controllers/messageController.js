@@ -1,5 +1,5 @@
 const { default: mongoose } = require('mongoose');
-const { messageService } = require('../services');
+const { messageService, chatService } = require('../services');
 const { text } = require('express');
 const { SOCKET_EVENTS } = require('../constants');
 
@@ -10,6 +10,11 @@ const createMessage = async (req, res) => {
       sender: new mongoose.Types.ObjectId(req.body.sender),
       message: req.body.text,
     });
+
+    const updatedChat = await chatService.updateChat(
+      { _id: new mongoose.Types.ObjectId(req.body.chatId) },
+      { updatedAt: new Date() }
+    );
 
     if (result) {
       res.status(200).json({ message: 'Message Created Successfully' });

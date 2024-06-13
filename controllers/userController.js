@@ -9,6 +9,7 @@ const bcrypt = require('bcrypt');
 const { sendMail } = require('../services/mailerService');
 const _ = require('lodash');
 const cloudinary = require('../config/cloudinary');
+const { default: mongoose } = require('mongoose');
 
 const signup = async (req, res) => {
   try {
@@ -165,7 +166,7 @@ const validateLink = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    const refreshToken = req.body.token;
+    const refreshToken = req.body.access_token;
 
     if (!refreshToken) {
       return res.status(401).json('You are not authenticated!');
@@ -283,9 +284,12 @@ const updateProfile = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const { search } = req.body;
+    const user = req.user;
+
     const query = [
       {
         $match: {
+          _id: { $ne: new mongoose.Types.ObjectId(user?._id) },
           ...(req.body.search && {
             name: {
               $regex: req.body.search,

@@ -4,7 +4,7 @@ const { SOCKET_EVENTS } = require('../constants');
 
 const createChat = async (req, res) => {
   try {
-    const { users } = req.body;
+    const { users, isGroup, groupName } = req.body;
 
     if (!users?.length) {
       return res.status(403).json({ error: 'Users required' });
@@ -16,19 +16,27 @@ const createChat = async (req, res) => {
       return new mongoose.Types.ObjectId(id);
     });
 
+    let condition;
+
+    if (isGroup) {
+      condition = { groupName: groupName, isGroup: true };
+    }
+
     const existingChat = await chatService.getOneChat({
-      isGroup: false,
+      ...condition,
       participants: { $all: [...userIds, req?.user?._id] },
     });
 
     if (existingChat) {
-      return res.status(409).json({ error: 'Chat already exists' });
+      return res
+        .status(409)
+        .json({ error: `${isGroup ? 'Group' : 'Chat'} already exists` });
     }
 
     const newChat = await chatService.addChat({
       creator: new mongoose.Types.ObjectId(req.user?._id),
       participants: [...userIds, req.user?._id],
-      isGroup: false,
+      ...condition,
     });
 
     if (!newChat) {
@@ -81,6 +89,11 @@ const getMyChats = async (req, res) => {
           localField: 'participants',
           foreignField: '_id',
           as: 'users',
+        },
+      },
+      {
+        $sort: {
+          updatedAt: -1,
         },
       },
     ];
