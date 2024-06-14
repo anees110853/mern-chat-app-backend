@@ -5,6 +5,8 @@ const { SOCKET_EVENTS } = require('../constants');
 
 const createMessage = async (req, res) => {
   try {
+    const io = req.app.get('socketio');
+
     const result = await messageService.addMessage({
       chatId: new mongoose.Types.ObjectId(req.body.chatId),
       sender: new mongoose.Types.ObjectId(req.body.sender),
@@ -16,10 +18,14 @@ const createMessage = async (req, res) => {
       { updatedAt: new Date() }
     );
 
+    if (updatedChat) {
+      io.emit(SOCKET_EVENTS.re_fetch_chats, {
+        ids: updatedChat?.participants,
+      });
+    }
+
     if (result) {
       res.status(200).json({ message: 'Message Created Successfully' });
-
-      const io = req.app.get('socketio');
 
       io.emit(SOCKET_EVENTS.re_fetch_messages, {
         chatId: req.body.chatId,
