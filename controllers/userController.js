@@ -8,10 +8,13 @@ const {
 const bcrypt = require('bcrypt');
 const { sendMail } = require('../services/mailerService');
 const _ = require('lodash');
+const cloudinary = require('../config/cloudinary');
+const { default: mongoose } = require('mongoose');
 
 const signup = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email || !password) {
       return res.status(422).send({ error: 'Email or password missing!' });
     }
@@ -31,10 +34,18 @@ const signup = async (req, res) => {
       });
     }
 
+    let result;
+    if (req.body.image) {
+      result = await cloudinary.uploader.upload(req.body.image, {
+        upload_preset: 'mern_chat_app', // Optional, if you have presets set up
+      });
+    }
+
     user = await userService.addUser({
       email: req.body.email.toLowerCase(),
       password: req.body.password,
       name: req.body.firstName + ' ' + req.body.lastName,
+      image: result?.url,
     });
 
     const accessToken = jwtService.generateAccessToken(user);
@@ -153,6 +164,36 @@ const validateLink = async (req, res) => {
   }
 };
 
+const refreshToken = async (req, res) => {
+  try {
+    const refreshToken = req.body.access_token;
+
+    if (!refreshToken) {
+      return res.status(401).json('You are not authenticated!');
+    }
+
+    jwtService.verifyToken(
+      refreshToken,
+      process.env.JWT_TOKEN_KEY,
+      async (err, user) => {
+        err && console.log(err);
+
+        const newAccessToken = jwtService.generateAccessToken(user);
+        const newRefreshToken = jwtService.generateAccessToken(user, true);
+
+        res
+          .set('access-control-expose-headers', '*')
+          .header('access_token', newAccessToken)
+          .header('refresh_token', newRefreshToken)
+          .status(200)
+          .json({});
+      }
+    );
+  } catch (err) {
+    res.status(500).send(err);
+  }
+};
+
 const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword, confirmNewPassword } = req.body;
@@ -240,6 +281,34 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const { search } = req.body;
+    const user = req.user;
+
+    const query = [
+      {
+        $match: {
+          _id: { $ne: new mongoose.Types.ObjectId(user?._id) },
+          ...(req.body.search && {
+            name: {
+              $regex: req.body.search,
+              $options: 'i',
+            },
+          }),
+        },
+      },
+    ];
+    const users = await userService.aggregate(query);
+    res
+      .status(200)
+      .json({ message: 'User retrieved successfully', data: users });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json('Internal Server Error');
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -248,4 +317,6 @@ module.exports = {
   resetPassword,
   changePassword,
   updateProfile,
+  getAllUsers,
+  refreshToken,
 };

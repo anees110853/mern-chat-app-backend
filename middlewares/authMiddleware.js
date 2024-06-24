@@ -2,8 +2,8 @@ const jwtService = require('../services/jwtService');
 const userService = require('../services/userService');
 
 const verifyUser = async (req, res, next) => {
-  if (!req.headers.platform)
-    return res.status(403).json({ error: "'platform' required in headers" });
+  // if (!req.headers.platform)
+  //   return res.status(403).json({ error: "'platform' required in headers" });
   const authHeader = req.headers.access_token;
   if (authHeader) {
     const token = authHeader.split(' ')[1];

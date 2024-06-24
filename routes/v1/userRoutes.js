@@ -20,4 +20,12 @@ router.post('/validate_pass_reset_link', userController.validateLink);
 
 router.post('/reset_password', userController.resetPassword);
 
+router.post('/refresh-token', userController.refreshToken);
+
+router.post(
+  '/all_users',
+  authMiddleware.verifyUser,
+  userController.getAllUsers
+);
+
 module.exports = router;

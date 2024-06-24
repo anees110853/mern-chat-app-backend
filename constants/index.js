@@ -24,6 +24,11 @@ const PLATFORMS = {
 
 const USER_LOCKED_FIELDS = ['email', 'password'];
 
+const SOCKET_EVENTS = {
+  re_fetch_chats: 'RE_FETCH_CHATS',
+  re_fetch_messages: 'RE_FETCH_MESSAGES',
+};
+
 module.exports = {
   FORGET_PASS_EMAIL_BODY,
   getS3Url,
@@ -31,4 +36,5 @@ module.exports = {
   passwordRegex,
   PLATFORMS,
   USER_LOCKED_FIELDS,
+  SOCKET_EVENTS,
 };

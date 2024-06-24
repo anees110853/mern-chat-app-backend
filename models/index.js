@@ -1,3 +1,5 @@
 module.exports = {
-    UserModel: require("./User"),
+  UserModel: require('./User'),
+  ChatModel: require('./Chat'),
+  MessageModel: require('./Message'),
 };
